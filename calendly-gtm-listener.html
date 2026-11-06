@@ -1,0 +1,32 @@
+<script>
+/* Calendly listener by MD Niamul - mdniamul.com */
+(function () {
+  window.dataLayer = window.dataLayer || [];
+  var lastInvitee = '';
+  var lastPush = 0;
+
+  window.addEventListener('message', function (event) {
+    // Only trust messages from Calendly's embed (inline widget, popup widget or popup text)
+    if (event.origin !== 'https://calendly.com') return;
+
+    var data = event.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.event !== 'calendly.event_scheduled') return;
+
+    var payload = data.payload || {};
+    var inviteeUri = (payload.invitee && payload.invitee.uri) || '';
+
+    // One push per booking, even if Calendly sends the message twice
+    var now = new Date().getTime();
+    if ((inviteeUri && inviteeUri === lastInvitee) || now - lastPush < 2000) return;
+    lastInvitee = inviteeUri;
+    lastPush = now;
+
+    window.dataLayer.push({
+      event: 'calendly_booking_success',
+      form_id: 'calendly_embed',
+      page_path: window.location.pathname
+    });
+  });
+})();
+</script>
